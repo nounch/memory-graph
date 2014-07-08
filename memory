@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+
+
+import time
+import subprocess
+import re
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+# Fetching the data
+
+def fetch_data(data):
+  process = subprocess.Popen('free', shell=True, stdout=subprocess.PIPE,
+                             stderr=subprocess.STDOUT)
+  numbers = []
+  nums = []
+  for line in process.stdout.readlines():
+    numbers = re.split('\s', line)
+    for data_point in numbers:
+      if re.match('\A\d+\Z', data_point):
+        nums.append(data_point)
+
+  for i, num in enumerate(nums):
+    try:
+      data[i].append(num)
+    except Exception, e:
+      data.append([])
+      data[i].append(num)
+      # Ignore the exception.
+
+  return data
+
+
+# Plotting
+
+def plot_data(data):
+  plt.ion()
+  lines = []
+  for data_point in data:
+    lines.append(plt.plot(data_point * 30, ':')[0])
+  for i, data_point in enumerate(data):
+    lines[i].set_ydata(data_point * 30)
+    # plt.autoscale()
+    plt.draw()
+
+
+data = []
+while True:
+  # Dumb buffer
+  if len(data) > 500:
+    data = []
+  data = fetch_data(data)
+  plot_data(data)
